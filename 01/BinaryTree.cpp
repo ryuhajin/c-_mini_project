@@ -8,7 +8,7 @@ typedef struct node {
 	treePointer rightChild;
 } node;
 
-// 전위 순회 1. 루트 2. 왼쪽 순회 3. 오른쪽 순회
+// 전위 순회 1. 루트 2. 왼쪽 순회 3. 오른쪽 순회 (Root -> Left -> Right)
 void preorder(treePointer ptr) {
 	if (ptr) {
 		std::cout << "node: " << ptr->data << ' ';
@@ -21,7 +21,7 @@ void preorder(treePointer ptr) {
 	}
 }
 
-// 중위 순회 1. 왼쪽 순회 2. 루트 3. 오른쪽 순회
+// 중위 순회 1. 왼쪽 순회 2. 루트 3. 오른쪽 순회 (Left -> Root -> Right)
 void inorder(treePointer ptr) {
 	if (ptr) {
 		inorder(ptr->leftChild);
@@ -30,7 +30,7 @@ void inorder(treePointer ptr) {
 	}
 }
 
-// 후위 순회 1. 왼쪽 순회 2. 오른쪽 순회 3. 루트
+// 후위 순회 1. 왼쪽 순회 2. 오른쪽 순회 3. 루트 (Left -> Right -> Root)
 void postorder(treePointer ptr) {
 	if (ptr) {
 		postorder(ptr->leftChild);
