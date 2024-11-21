@@ -28,7 +28,7 @@ node* creatNode(int key, int value) // 노드 만들기
 
 int hashFunction(int key)
 {
-	return key&SIZE;
+	return key%SIZE;
 }
 
 void insert(int key, int value)
@@ -36,6 +36,7 @@ void insert(int key, int value)
 	int hashIndex = hashFunction(key);
 
 	node* node = creatNode(key, value);
+	// std::cout << "\n*** new node ***   " << node << std::endl;
 
 	// 인덱스에 아무 노드가 없는 경우
 	if (hashTable[hashIndex].count == 0)
@@ -50,17 +51,20 @@ void insert(int key, int value)
 		hashTable[hashIndex].count++;
 	}
 
-	std::cout << "hashIndex:" << hashIndex << std::endl;
-	std::cout << "[node]" << std::endl;
-	std::cout << "key: " << node->key << "\n" << "value: " << node->value << std::endl;
+	// std::cout << "\nhashIndex:" << hashIndex << " && head:" << hashTable[hashIndex].head << std::endl;
+	// std::cout << "\n[node]" << std::endl;
+	// std::cout << "key: " << node->key << "\n" << "value: " << node->value << std::endl;
+	// std::cout << "my address: " << node << std::endl;
+	// if (node->next != NULL)
+	// 	std::cout <<  " -> " << node->next << std::endl; 
 	return ;
 }
 
 void remove(int key)
 {
 	int hashIndex = hashFunction(key);
-	node* node;
-	Node* temp;
+	node* node = NULL;
+	Node* temp = NULL;
 
 	node = hashTable[hashIndex].head;
 
@@ -144,6 +148,11 @@ int main()
 {
 	hashTable = new bucket[SIZE];
 
+	for (int i = 0; i < SIZE; i++) {
+        hashTable[i].head = NULL;
+        hashTable[i].count = 0;
+    }
+
 	insert(0, 1); //0
 	insert(1, 10); //0
 	insert(11, 90);
@@ -152,16 +161,13 @@ int main()
 	insert(6, 25);
 	insert(97, 4); //0
 	
-	node* temp = search(0);
-	if (temp->next == NULL)
-		std::cout << "what";
-	else
-		std::cout << temp->value;
-	// displayAll();
 
-	// remove(21);
+	displayAll();
 
-	// displayAll();
+	remove(21);
+	remove(0);
+
+	displayAll();
 
 	return (0);
 }
