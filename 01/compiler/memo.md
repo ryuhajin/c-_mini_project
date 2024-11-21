@@ -91,3 +91,94 @@ go 언어를 해석하고 내가 이해한 바
 > - Definition struct : Opcode에 해당하는 명령어의 이름, 크기를 저장해놓을 데이터 구조체
 > - var definitions: Opcode에 해당하는 명령어를 키, Definition 구조체의 포인터를 값으로 갖는 명령어 테이블
 > - fun Lookup: 명령어 테이블을 이용해 Opcode를 키로 찾고 해당하는 데이터 구조체가 있으면 그것을 리턴, 없으면 에러를 뱉는 함수
+
+## 유니폼 초기화
+- c++11부터 도입되었음
+- 중괄호 `{}` 를 사용하여 통일된 형식으로 초기화 할 수 있는 기능이다.
+
+### 유니폼 초기화 예시
+```c++
+#include <vector>
+#include <map>
+
+std::vector<int> numbers{1, 2, 3, 4, 5};
+
+std::map<int, std::string> students{
+        {1, "Alice"},
+        {2, "Bob"},
+        {3, "Charlie"}
+    };
+```
+
+### c++98과 c++11 초기화 차이
+|특징|c++98 초기화|c++11 유니폼 초기화|
+|---|---|---|
+벡터 초기화|std::vector<int> vec; vec.push_back(1); vec.push_back(2);|std::vector<int> vec{1,2};|
+배열 초기화|int arr[3] = {1,2,3}; | int arr[] = {1,2,3};|
+맵 초기화|std::map<int, std::string> m; m.insert(std::make_pair(1, "Alice"));|std::map<int, std::string> m{ {1, "Alice"}, {2, "Bob"} };|
+
+### 클래스 맴버 초기화 차이점
+```c++
+//c++98
+class MyClass {
+    int a;
+    int b;
+
+public:
+    // 생성자를 이용해 멤버 변수 초기화
+    MyClass(int x, int y) : a(x), b(y) {
+    }
+};
+
+
+//c++11
+class MyClass {
+    int a{10};  // 멤버 변수 a를 10으로 초기화
+    int b{20};  // 멤버 변수 b를 20으로 초기화
+
+public:
+    // 생성자 없이도 기본 초기값을 사용할 수 있음
+    MyClass() = default;  // 기본 생성자
+};
+```
+
+## nullptr
+C++98과 C++03에서는 널 포인터(null pointer)를 나타내기 위해 NULL을 사용했다.
+
+하지만 **NULL은 실제로는 단순히 0으로 정의된 매크로 상수**이기 때문에 **정수와 혼동 문제**가 있었다.
+
+특히 함수 오버로드를 할 때 문제가 되곤했다.
+
+```c++
+void foo(int);
+void foo(char*);
+
+foo(NULL); // 이 경우, 'foo(int)'가 호출될 수 있다.
+```
+
+이를 해결하기 위해 c++11부터 오직 포인터 리터럴 타입인 `nullptr`이 도입됐다.
+
+### nullptr 사용 예시
+```c++
+void foo(int) {
+    std::cout << "정수 버전 foo(int) 호출" << std::endl;
+}
+
+void foo(char*) {
+    std::cout << "포인터 버전 foo(char*) 호출" << std::endl;
+}
+
+int main() {
+    foo(NULL);    // 정수 버전 foo(int)가 호출될 가능성이 있음
+    foo(nullptr); // 포인터 버전 foo(char*)가 호출됨
+
+    return 0;
+}
+```
+
+### NULL VS nullptr
+특성|NULL|nullptr|
+|---|---|---|
+타입|정수(0)로 정의된 매크로|std::nullptr_t
+안정성|정수와 혼동 가능|오직 포인터 타입
+함수 오버로드|정수 오버로드 호출 가능성이 있음|포인터 타입 오버로드로 명확하게 매칭
