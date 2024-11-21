@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(lldb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/main",  // 빌드된 실행 파일의 경로
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",  // 현재 워크스페이스 폴더를 작업 디렉토리로 설정
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for lldb",
+                    "text": "settings set target.pretty-printing true",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build",
+            "miDebuggerPath": "/usr/bin/lldb",
+            "logging": {
+                "moduleLoad": false,
+			}
+		}
+	]
+}
