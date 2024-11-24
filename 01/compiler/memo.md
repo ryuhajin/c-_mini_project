@@ -182,3 +182,164 @@ int main() {
 타입|정수(0)로 정의된 매크로|std::nullptr_t
 안정성|정수와 혼동 가능|오직 포인터 타입
 함수 오버로드|정수 오버로드 호출 가능성이 있음|포인터 타입 오버로드로 명확하게 매칭
+
+## 명령어 생성
+
+```go
+// code/code_test.go
+package code
+
+import "testing"
+
+func TestMake(t *test.T) {
+	tests := []struct {
+		op Opcode
+		operands []int
+		expected []byte
+	}{
+		{OpConstant, []int{65534}, []byte{byte(OpConstant), 255, 254}},
+	}
+
+	for _, tt := range tests {
+		instruction := Make(tt.op, tt.operands...)
+
+		if len(instruction) != len(tt.expected) {
+			t.Errorf("instruction has wrong length. want=%d, got=%d", len(tt.expected), len(instruction))
+		}
+		
+
+		for i, b := range tt.expected {
+			if instruction[i] != tt.expected[i] {
+				t.Errorf(
+					"wrong byte at pos %d. want=%d, got=%d", t, b, instruction[i])
+			}
+		}
+	}
+}
+
+//code/code.go
+
+import {
+	"encoding/binary"
+	"fmt"
+}
+
+//Make 함수는 주어진 명령어(Opcode)와 피연산자(operands)를 사용하여 바이트 코드 형태의 명령어를 생성하는 함수
+
+// ...int 가변인자 사용 (어떤 명령어는 피연산자가 없을 수도 있고, 어떤 명령어는 하나 이상의 피연산자가 필요할 수 있다.)
+func Make(op Opcode, operands ...int) []byte {
+	def, ok :=definitions[op]
+	if !ok{
+		return []byte{}
+	}
+
+	instructionLen := 1
+	// for _, w := range == for-each 반복문
+	for _, w := range  def,OperandWidths {
+		instructionLen += w
+	}
+
+	instruction := make([]byte, instructionLen) // make는 go의 내장함수 바이트 슬라이스 생성 후 초기화.
+	instruction[0] = byte(op)
+
+	offset := 1
+	for i, o := range operands {
+		width := def.OperandWidths[i]
+		switch width {
+			case 2:
+				binary.Bigndian.PutUint16(instruction[offset:], uint16(o))
+		}
+		offset += width
+	}
+	
+	return instruction
+}
+
+```
+
+### instruct와 operandWidth의 단위 제대로 이해하기
+- Instruct (`std::vector<uint8_t>`): 명령어와 (Opcode) 피연산자들을 바이트 코드 형태로 저장하는 배열.
+	- 기계가 이해할 수 있는 바이트 단위의 데이터를 저장한다.
+	- 명령어를 바이트 단위(uint8_t)로 해석하고 실행하는 과정에서 메모리 접근과 저장이 명확해진다.
+- operandWidth (`std::vector<int>`): 각 명령어가 필요로 하는 피연산자의 크기 정보를 저장하는 벡터.
+	-operandWidth{2}는 OpConstant 명령어가 2바이트 크기의 피연산자 하나를 요구한다는 뜻이다.
+	- 여러 개의 피연산자가 있을 경우, 벡터의 각 요소가 각 피연산자의 크기를 나타냅니다.
+	- 예: {1, 4}는 첫 번째 피연산자가 1바이트, 두 번째 피연산자가 4바이트임을 의미.
+	- operandWidth 벡터는 전체 크기를 합한 값이 아니라, 각각의 피연산자의 개별 크기를 표현하기 위한 것이다.
+
+## 리틀 엔디안과 빅 엔디안
+리틀 엔디안와 빅 엔디안의 중요한 점은 비트의 순서가 아니라 바이트의 순서라는 것이다.
+
+- 비트 순서는 리틀 엔디안과 빅 엔디안과 관계없이 항상 내부적으로 동일하게 저장된다.
+- 예를 들어, 0x34는 항상 00110100으로 표현되며, 비트 자체의 순서가 바뀌지는 않는다.
+- 바이트 순서는 메모리에 여러 바이트를 어떤 순서로 저장할 것인가를 의미한다.
+- 리틀 엔디안은 하위 바이트부터 먼저 메모리에 저장하고, 빅 엔디안은 상위 바이트부터 먼저 저장한다.
+
+```c++
+// 리틀 엔디안인지 확인하는 함수
+
+bool is_little_endian() {
+    uint16_t value = 0x1;
+    uint8_t* ptr = reinterpret_cast<uint8_t*>(&value);
+    return (*ptr == 0x1);
+}
+```
+1. uint16_t value = 0x1;
+
+여기서 value는 0x0001이라는 값을 가진 16비트 정수이다.
+16비트 정수는 두 개의 바이트로 구성된다.
+value의 메모리 상 표현 `0x0001 (이진수로는 0000 0000 0000 0001)`
+
+2. uint8_t* ptr = reinterpret_cast<uint8_t*>(&value);:
+
+value의 주소를 uint8_t*로 캐스팅한다.
+즉, value의 메모리 주소를 바이트 단위(uint8_t = 8비트)로 접근할 수 있는 포인터로 변경하는 것이다.
+이 포인터는 value가 저장된 메모리의 첫 번째 바이트를 가리키게 된다.
+
+3. return (*ptr == 0x1);:
+
+이제 ptr이 가리키는 메모리의 첫 번째 바이트를 확인한다.
+만약 리틀 엔디안 시스템이라면, value의 바이트 순서는 **LSB(최하위 바이트)**부터 메모리에 저장됩니다. 즉, 0x0001은 메모리에 01 00으로 저장된다.
+리틀 엔디안이라면 *ptr이 가리키는 첫 번째 바이트는 0x01이다.
+
+반대로 빅 엔디안 시스템이라면, 0x0001은 메모리에 00 01로 저장되며, *ptr이 가리키는 첫 번째 바이트는 0x00이 된다.
+
+따라서 (*ptr == 0x1)이 참이면, 시스템은 리틀 엔디안이고, 그렇지 않다면 빅 엔디안이라는 것을 의미한다.
+
+## 범위 기반 for 문 (for-each와 비슷함)
+c++11부터 도입된 기능으로 컨테이너나 배열의 모든 요소를 순회할 때 편리하게 사용할 수 있다.
+
+기본적으로 다음과 같은 형태이다.
+```c++
+for (auto element : container) {
+    // element에 대한 작업 수행
+}
+```
+
+### 범위 기반 for문에서 요소를 받는 방법
+1. 값 복사 (기본 동작)
+```c++
+for (auto element : container) {
+    // element의 값은 container의 요소에서 복사됨.
+    element += 1;  // 원래의 container 요소는 변경되지 않음.
+}
+```
+
+2. 참조로 받기 (&)
+```c++
+for (auto &element : container) {
+    // element는 container의 실제 요소를 참조함.
+    element += 1;  // 원래의 container 요소가 변경됨.
+}
+```
+
+3. 상수 참조 (const &)
+```c++
+for (const auto &element : container) {
+    // element는 container의 실제 요소를 상수 참조함.
+    // 읽기만 가능하며, 수정할 수 없음.
+    std::cout << element << std::endl;
+}
+```
+
+
